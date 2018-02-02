@@ -6,49 +6,59 @@ public class PlayerController : MonoBehaviour
 {
     //movement variabels
     public float speed = 1.0f;
-    public int invert = 1;//negative int for mouse inversion
-    public float tilt = 3.0f;
+    public float targetDistance = 10.0f;
     Rigidbody shipRigidbody;
-
+    
 
     //weapon variables
-    public Rigidbody blasterBolt;
+    public GameObject blasterBolt;
     public float boltVelocity = 1.0f;
     public Transform[] blasterGuns;
 
 
-    void Start ()
+     void Start()
     {
         Cursor.visible = false;//temporarily
-        Cursor.lockState = CursorLockMode.Locked;
-
+        //Cursor.lockState = CursorLockMode.Locked;
         shipRigidbody = GetComponent<Rigidbody>();
+    }  
 
-	}
-	
-	
-	void Update ()
+    void Update()
     {
-        float horizontal = Input.GetAxis("Horizontal");
-        float vertical = Input.GetAxis("Vertical") * invert;
-        
-        Vector3 movementVector = new Vector3(horizontal, vertical, 0) * speed*Time.deltaTime;
-        Vector3 finalDirection = new Vector3(horizontal, vertical, 10.0f);
-        //shipRigidbody.AddRelativeForce(movementVector, ForceMode.Acceleration);
-        shipRigidbody.velocity = movementVector;
-        //transform.position += movementVector;
-        
-        transform.rotation=Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(finalDirection),Mathf.Deg2Rad* tilt);
+        Vector2 mouse = Input.mousePosition;
+
+       Ray mouseRay = Camera.main.ScreenPointToRay(mouse);
+        float targetPoint = transform.position.magnitude + targetDistance;
+        Vector3 target = mouseRay.origin + mouseRay.direction * targetPoint;
+        transform.LookAt(target);
+        foreach (Transform blaster in blasterGuns)
+            blaster.LookAt(target);
+        target.z = transform.position.z;
+        transform.position = Vector3.MoveTowards(transform.position, target, speed);
 
 
         if (Input.GetButtonDown("Fire1"))
         {
             foreach (Transform blaster in blasterGuns)
             {
-                Rigidbody spawnedBolt = Instantiate(blasterBolt, blaster.position, Quaternion.Euler(90, transform.rotation.y, transform.rotation.z));
-                spawnedBolt.AddForce(transform.forward * boltVelocity, ForceMode.VelocityChange);
+                GameObject bolt = Instantiate(blasterBolt, blaster.position, blaster.rotation) as GameObject;
+                bolt.GetComponent<Rigidbody>().AddForce(transform.forward * boltVelocity, ForceMode.Impulse);
+
             }
         }
-        
-	}
+
+    }
 }
+
+
+
+        
+
+
+
+
+
+   
+
+
+    
